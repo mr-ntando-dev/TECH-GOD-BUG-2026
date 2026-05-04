@@ -29,7 +29,85 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => res.sendStatus(200));
 
-// ── Pairing endpoint ─────────────────────────────────────────────────────────
+// ── Pairing page (GET) ───────────────────────────────────────────────────────
+app.get('/pair', (req, res) => {
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Tech God Bug 2026 - Pair Device</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .card { background: #1a1a1a; border: 1px solid #333; border-radius: 16px; padding: 40px; max-width: 420px; width: 90%; text-align: center; }
+    h1 { color: #00ff88; font-size: 1.8rem; margin-bottom: 8px; }
+    p { color: #888; margin-bottom: 24px; font-size: 0.9rem; }
+    input { width: 100%; padding: 14px 16px; border-radius: 8px; border: 1px solid #444; background: #0a0a0a; color: #fff; font-size: 1rem; margin-bottom: 16px; outline: none; }
+    input:focus { border-color: #00ff88; }
+    button { width: 100%; padding: 14px; border-radius: 8px; border: none; background: #00ff88; color: #0a0a0a; font-size: 1rem; font-weight: 700; cursor: pointer; }
+    button:hover { background: #00cc6a; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result { margin-top: 20px; padding: 16px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; }
+    .result.success { background: #00ff8822; color: #00ff88; }
+    .result.error { background: #ff444422; color: #ff4444; }
+    .code { font-size: 2rem; letter-spacing: 4px; margin-top: 8px; }
+    .instructions { margin-top: 16px; color: #aaa; font-size: 0.8rem; text-align: left; }
+    .instructions li { margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🐛 Pair Device</h1>
+    <p>Enter your WhatsApp number (digits only, with country code)</p>
+    <input type="text" id="phone" placeholder="e.g. 263786831091" maxlength="15" />
+    <button id="btn" onclick="pair()">Get Pairing Code</button>
+    <div id="result"></div>
+    <ul class="instructions">
+      <li>1. Open WhatsApp on your phone</li>
+      <li>2. Go to <strong>Settings > Linked Devices</strong></li>
+      <li>3. Tap <strong>Link a Device</strong></li>
+      <li>4. Tap <strong>Link with phone number instead</strong></li>
+      <li>5. Enter the pairing code shown above</li>
+    </ul>
+  </div>
+  <script>
+    async function pair() {
+      const phone = document.getElementById('phone').value.trim();
+      const btn = document.getElementById('btn');
+      const result = document.getElementById('result');
+      if (!/^\\d{10,15}$/.test(phone)) {
+        result.className = 'result error';
+        result.innerHTML = 'Invalid number. Use 10-15 digits, no + or spaces.';
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Pairing... (up to 60s)';
+      result.className = '';
+      result.innerHTML = '';
+      try {
+        const res = await fetch('/pair', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone }) });
+        const data = await res.json();
+        if (data.success) {
+          result.className = 'result success';
+          result.innerHTML = 'Your pairing code:<div class="code">' + data.code + '</div>';
+        } else {
+          result.className = 'result error';
+          result.innerHTML = data.error || 'Pairing failed.';
+        }
+      } catch (e) {
+        result.className = 'result error';
+        result.innerHTML = 'Network error: ' + e.message;
+      }
+      btn.disabled = false;
+      btn.textContent = 'Get Pairing Code';
+    }
+  </script>
+</body>
+</html>`;
+  res.send(html);
+});
+
+// ── Pairing endpoint (POST) ──────────────────────────────────────────────────
 app.post('/pair', async (req, res) => {
   const { phone } = req.body;
   if (!phone || !/^\d{10,15}$/.test(phone)) {
