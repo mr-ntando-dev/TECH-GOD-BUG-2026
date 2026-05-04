@@ -1,5 +1,5 @@
 /**
- * 🐛 Tech God Bug 2026 v1.0.0 — Message Handler
+ * 🐛 Tech God Bug 2026 v2.5.0.5.7 — Message Handler
  * Routes commands, keyword replies, anti-spam, anti-link, auto-react.
  * By Dev-Ntando
  */

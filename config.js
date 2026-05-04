@@ -1,5 +1,5 @@
 /**
- * 🐛 Tech God Bug 2026 v1.0.0 — Configuration
+ * 🐛 Tech God Bug 2026 v2.5.0.5.7 — Configuration
  * Edit values here OR set them as environment variables.
  * ENV vars always take priority over hardcoded values.
  * By Dev-Ntando
@@ -13,7 +13,7 @@ module.exports = {
 
   // ── Bot ────────────────────────────────────────────────────────────────────
   botName:    process.env.BOT_NAME    || 'Tech God Bug 2026',
-  botVersion: '1.0.0',
+  botVersion: '2.5.0.5.7',
   prefix:     process.env.PREFIX      || '.',
   timezone:   process.env.TZ          || 'Africa/Harare',
 
@@ -80,7 +80,7 @@ module.exports = {
     { keyword: 'good evening',    reply: '🌆 *Good Evening!* Time to wind down and relax. 🌟' },
     { keyword: 'good night',      reply: '🌙 *Good Night!* Rest well and sleep tight. 💤' },
     { keyword: 'who made you',    reply: '👑 I was crafted by *Dev-Ntando* — powered by 🐛 Tech God Bug 2026.' },
-    { keyword: 'who created you', reply: '👑 *Dev-Ntando* built me! I am Tech God Bug 2026 v1.0.0 🐛' },
+    { keyword: 'who created you', reply: '👑 *Dev-Ntando* built me! I am Tech God Bug 2026 v2.5.0.5.7 🐛' },
     { keyword: 'what can you do', reply: '🐛 I can do a lot! Type *.menu* to see all my commands.' },
     { keyword: 'are you a bot',   reply: '🤖 Yes! I am *Tech God Bug 2026* — your intelligent WhatsApp bot. 🐛' },
     { keyword: 'nice bot',        reply: '😊 *Thank you!* I appreciate the love. 🐛' },

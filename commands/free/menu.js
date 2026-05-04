@@ -1,5 +1,5 @@
 /**
- * 🐛 Tech God Bug 2026 v1.0.0 — Menu Command
+ * 🐛 Tech God Bug 2026 v2.5.0.5.7 — Menu Command
  * Styled menu with sub-menus for different categories.
  * By Dev-Ntando
  */

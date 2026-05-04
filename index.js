@@ -1,5 +1,5 @@
 /**
- * 🐛 Tech God Bug 2026 v1.0.0 — Multi-User Entry Point
+ * 🐛 Tech God Bug 2026 v2.5.0.5.7 — Multi-User Entry Point
  *
  * Each WhatsApp number gets its own isolated bot instance.
  * The server dashboard shows all running bots (phone numbers masked).
