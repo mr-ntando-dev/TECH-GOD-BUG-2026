@@ -1,5 +1,5 @@
 /**
- * 🐛 Tech God Bug 2026 — Multi-User Session Manager
+ * 🐛 Tech God Bug 2026 v2.5.0.5.7 — Multi-User Session Manager
  *
  * Manages multiple independent Baileys bot instances.
  * Each user has their own isolated session directory, socket, and state.
@@ -89,7 +89,8 @@ async function bootSavedSessions() {
 }
 
 // ── Create / connect a bot instance ──────────────────────────────────────────
-async function createBot(phone, pairRequest) {
+async function createBot(phone, options) {
+  // options: { usePairCode: true/false, resolve, reject }
   if (_bots.has(phone) && !_bots.get(phone).destroyed) {
     const existing = _bots.get(phone);
     if (existing.connected) return existing;
@@ -105,20 +106,20 @@ async function createBot(phone, pairRequest) {
     socketReady: false,
     number: phone,
     socket: null,
-    pairRequest: pairRequest || null,
     qr: null,
+    qrResolve: null,
     startedAt: Date.now(),
     attempt: 0,
     destroyed: false,
   };
 
   _bots.set(phone, bot);
-  await _connectSocket(bot);
+  await _connectSocket(bot, options);
   return bot;
 }
 
 // ── Internal socket connection ───────────────────────────────────────────────
-async function _connectSocket(bot) {
+async function _connectSocket(bot, options) {
   if (bot.destroyed) return;
 
   bot.attempt++;
@@ -145,6 +146,20 @@ async function _connectSocket(bot) {
 
   bot.socket = sock;
 
+  // ── Request pairing code immediately if needed (before connection opens) ──
+  if (options && options.usePairCode && !state.creds?.registered) {
+    try {
+      // Small delay to let the socket initialize
+      await new Promise(r => setTimeout(r, 3000));
+      const code = await sock.requestPairingCode(bot.phone);
+      _log(`Pairing code for ${maskPhone(bot.phone)}: ${code}`);
+      if (options.resolve) options.resolve(code);
+    } catch (e) {
+      _log(`Pairing code request failed for ${maskPhone(bot.phone)}:`, e.message);
+      if (options.reject) options.reject(e);
+    }
+  }
+
   // ── Credentials update ─────────────────────────────────────────────────────
   sock.ev.on('creds.update', saveCreds);
 
@@ -155,6 +170,11 @@ async function _connectSocket(bot) {
     if (qr) {
       bot.qr = qr;
       _log(`QR generated for ${maskPhone(bot.phone)}`);
+      // Resolve QR promise if someone is waiting for it
+      if (bot.qrResolve) {
+        bot.qrResolve(qr);
+        bot.qrResolve = null;
+      }
     }
 
     if (connection === 'open') {
@@ -165,17 +185,6 @@ async function _connectSocket(bot) {
       const me = sock.user?.id?.split(':')[0] || bot.phone;
       bot.number = me;
       _log(`✅ Connected: ${maskPhone(me)}`);
-
-      // Request pairing code if needed
-      if (bot.pairRequest && !state.creds?.registered) {
-        try {
-          const code = await sock.requestPairingCode(bot.pairRequest.phone);
-          bot.pairRequest.resolve(code);
-        } catch (e) {
-          bot.pairRequest.reject(e);
-        }
-        bot.pairRequest = null;
-      }
     }
 
     if (connection === 'close') {
@@ -223,6 +232,36 @@ async function _connectSocket(bot) {
   });
 }
 
+// ── Get QR for a session (creates bot if needed, waits for QR) ───────────────
+async function getQR(phone) {
+  let bot = _bots.get(phone);
+
+  // If bot already has a QR cached, return it
+  if (bot && bot.qr) return bot.qr;
+
+  // If bot is already connected, no QR needed
+  if (bot && bot.connected) return null;
+
+  // Create bot if it doesn't exist
+  if (!bot || bot.destroyed) {
+    bot = await createBot(phone);
+  }
+
+  // If QR is already available after createBot
+  if (bot.qr) return bot.qr;
+
+  // Wait for QR to be generated (up to 30s)
+  return new Promise((resolve) => {
+    bot.qrResolve = resolve;
+    setTimeout(() => {
+      if (bot.qrResolve === resolve) {
+        bot.qrResolve = null;
+        resolve(bot.qr || null);
+      }
+    }, 30000);
+  });
+}
+
 // ── Destroy a session ────────────────────────────────────────────────────────
 async function destroySession(phone) {
   const bot = _bots.get(phone);
@@ -245,5 +284,6 @@ module.exports = {
   destroySession,
   getBot,
   getAllBots,
+  getQR,
   maskPhone,
 };
