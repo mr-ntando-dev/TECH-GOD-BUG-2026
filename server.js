@@ -191,11 +191,8 @@ app.post('/pair', async (req, res) => {
   }
 
   try {
-    const pairPromise = new Promise((resolve, reject) => {
-      sessionManager.createBot(phone, { usePairCode: true, resolve, reject });
-    });
     const code = await Promise.race([
-      pairPromise,
+      sessionManager.requestPairCode(phone),
       new Promise((_, rej) => setTimeout(() => rej(new Error('Pairing timeout (60s). Try again.')), 60000)),
     ]);
     res.json({ success: true, code });
@@ -218,9 +215,13 @@ app.post('/qr', async (req, res) => {
       return res.json({ success: false, connected: true });
     }
 
-    const qrData = await sessionManager.getQR(phone);
+    const qrData = await Promise.race([
+      sessionManager.requestQR(phone),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('QR generation timeout (30s). Try again.')), 35000)),
+    ]);
+
     if (!qrData) {
-      return res.status(500).json({ error: 'Could not generate QR code. Session may already be connected.' });
+      return res.status(500).json({ error: 'Could not generate QR code.' });
     }
 
     // Convert QR string to data URL image

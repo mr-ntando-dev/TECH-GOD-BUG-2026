@@ -88,9 +88,8 @@ async function bootSavedSessions() {
   }
 }
 
-// ── Create / connect a bot instance ──────────────────────────────────────────
-async function createBot(phone, options) {
-  // options: { usePairCode: true/false, resolve, reject }
+// ── Create / connect a bot instance (no pairing, just boot) ──────────────────
+async function createBot(phone) {
   if (_bots.has(phone) && !_bots.get(phone).destroyed) {
     const existing = _bots.get(phone);
     if (existing.connected) return existing;
@@ -108,18 +107,118 @@ async function createBot(phone, options) {
     socket: null,
     qr: null,
     qrResolve: null,
+    pairCodeResolve: null,
+    pairCodeReject: null,
+    pairCodeRequested: false,
     startedAt: Date.now(),
     attempt: 0,
     destroyed: false,
   };
 
   _bots.set(phone, bot);
-  await _connectSocket(bot, options);
+  await _connectSocket(bot);
   return bot;
 }
 
+// ── Request pairing code for a phone number ──────────────────────────────────
+// Returns a promise that resolves with the 8-char pairing code
+async function requestPairCode(phone) {
+  // Clear any existing session for fresh pairing
+  const sessionDir = _sessionDir(phone);
+  if (fs.existsSync(sessionDir)) {
+    fs.rmSync(sessionDir, { recursive: true, force: true });
+  }
+
+  // Destroy existing bot if any
+  if (_bots.has(phone)) {
+    const old = _bots.get(phone);
+    old.destroyed = true;
+    try { old.socket?.end(); } catch {}
+    _bots.delete(phone);
+  }
+
+  fs.mkdirSync(sessionDir, { recursive: true });
+
+  const bot = {
+    phone,
+    sessionDir,
+    connected: false,
+    socketReady: false,
+    number: phone,
+    socket: null,
+    qr: null,
+    qrResolve: null,
+    pairCodeResolve: null,
+    pairCodeReject: null,
+    pairCodeRequested: false,
+    startedAt: Date.now(),
+    attempt: 0,
+    destroyed: false,
+  };
+
+  _bots.set(phone, bot);
+
+  // Create promise that will resolve when pairing code is obtained
+  const codePromise = new Promise((resolve, reject) => {
+    bot.pairCodeResolve = resolve;
+    bot.pairCodeReject = reject;
+  });
+
+  await _connectSocket(bot);
+  return codePromise;
+}
+
+// ── Request QR for a phone number ────────────────────────────────────────────
+// Returns a promise that resolves with the QR string
+async function requestQR(phone) {
+  // Clear any existing session for fresh QR
+  const sessionDir = _sessionDir(phone);
+  if (fs.existsSync(sessionDir)) {
+    fs.rmSync(sessionDir, { recursive: true, force: true });
+  }
+
+  // Destroy existing bot if any
+  if (_bots.has(phone)) {
+    const old = _bots.get(phone);
+    old.destroyed = true;
+    try { old.socket?.end(); } catch {}
+    _bots.delete(phone);
+  }
+
+  fs.mkdirSync(sessionDir, { recursive: true });
+
+  const bot = {
+    phone,
+    sessionDir,
+    connected: false,
+    socketReady: false,
+    number: phone,
+    socket: null,
+    qr: null,
+    qrResolve: null,
+    pairCodeResolve: null,
+    pairCodeReject: null,
+    pairCodeRequested: false,
+    startedAt: Date.now(),
+    attempt: 0,
+    destroyed: false,
+  };
+
+  _bots.set(phone, bot);
+
+  // Create promise that will resolve when QR is generated
+  const qrPromise = new Promise((resolve, reject) => {
+    bot.qrResolve = resolve;
+    // Timeout after 30s
+    setTimeout(() => reject(new Error('QR generation timeout')), 30000);
+  });
+
+  await _connectSocket(bot);
+  return qrPromise;
+}
+
 // ── Internal socket connection ───────────────────────────────────────────────
-async function _connectSocket(bot, options) {
+async function _connectSocket(bot) {
   if (bot.destroyed) return;
 
   bot.attempt++;
@@ -146,20 +245,6 @@ async function _connectSocket(bot, options) {
 
   bot.socket = sock;
 
-  // ── Request pairing code immediately if needed (before connection opens) ──
-  if (options && options.usePairCode && !state.creds?.registered) {
-    try {
-      // Small delay to let the socket initialize
-      await new Promise(r => setTimeout(r, 3000));
-      const code = await sock.requestPairingCode(bot.phone);
-      _log(`Pairing code for ${maskPhone(bot.phone)}: ${code}`);
-      if (options.resolve) options.resolve(code);
-    } catch (e) {
-      _log(`Pairing code request failed for ${maskPhone(bot.phone)}:`, e.message);
-      if (options.reject) options.reject(e);
-    }
-  }
-
   // ── Credentials update ─────────────────────────────────────────────────────
   sock.ev.on('creds.update', saveCreds);
 
@@ -167,16 +252,56 @@ async function _connectSocket(bot, options) {
   sock.ev.on('connection.update', async (update) => {
     const { connection, lastDisconnect, qr } = update;
 
+    // ── QR generated ─────────────────────────────────────────────────────────
     if (qr) {
       bot.qr = qr;
       _log(`QR generated for ${maskPhone(bot.phone)}`);
-      // Resolve QR promise if someone is waiting for it
+
+      // If someone is waiting for QR, resolve their promise
       if (bot.qrResolve) {
         bot.qrResolve(qr);
         bot.qrResolve = null;
       }
+
+      // If someone is waiting for a pairing code, request it now
+      // This is the correct timing: QR generation means WS is connected to WA
+      if (bot.pairCodeResolve && !bot.pairCodeRequested && !state.creds?.registered) {
+        bot.pairCodeRequested = true;
+        try {
+          const code = await sock.requestPairingCode(bot.phone);
+          _log(`✅ Pairing code for ${maskPhone(bot.phone)}: ${code}`);
+          bot.pairCodeResolve(code);
+        } catch (e) {
+          _log(`❌ Pairing code failed for ${maskPhone(bot.phone)}:`, e.message);
+          if (bot.pairCodeReject) bot.pairCodeReject(e);
+        }
+        bot.pairCodeResolve = null;
+        bot.pairCodeReject = null;
+      }
     }
 
+    // ── Also try on 'connecting' state ───────────────────────────────────────
+    if (connection === 'connecting') {
+      if (bot.pairCodeResolve && !bot.pairCodeRequested && !state.creds?.registered) {
+        // Wait a moment for WS to fully establish
+        setTimeout(async () => {
+          if (bot.pairCodeRequested || !bot.pairCodeResolve) return;
+          bot.pairCodeRequested = true;
+          try {
+            const code = await sock.requestPairingCode(bot.phone);
+            _log(`✅ Pairing code for ${maskPhone(bot.phone)}: ${code}`);
+            if (bot.pairCodeResolve) bot.pairCodeResolve(code);
+          } catch (e) {
+            _log(`❌ Pairing code failed for ${maskPhone(bot.phone)}:`, e.message);
+            if (bot.pairCodeReject) bot.pairCodeReject(e);
+          }
+          bot.pairCodeResolve = null;
+          bot.pairCodeReject = null;
+        }, 5000);
+      }
+    }
+
+    // ── Connected ────────────────────────────────────────────────────────────
     if (connection === 'open') {
       bot.connected   = true;
       bot.socketReady = true;
@@ -187,6 +312,7 @@ async function _connectSocket(bot, options) {
       _log(`✅ Connected: ${maskPhone(me)}`);
     }
 
+    // ── Disconnected ─────────────────────────────────────────────────────────
     if (connection === 'close') {
       bot.connected   = false;
       bot.socketReady = false;
@@ -232,36 +358,6 @@ async function _connectSocket(bot, options) {
   });
 }
 
-// ── Get QR for a session (creates bot if needed, waits for QR) ───────────────
-async function getQR(phone) {
-  let bot = _bots.get(phone);
-
-  // If bot already has a QR cached, return it
-  if (bot && bot.qr) return bot.qr;
-
-  // If bot is already connected, no QR needed
-  if (bot && bot.connected) return null;
-
-  // Create bot if it doesn't exist
-  if (!bot || bot.destroyed) {
-    bot = await createBot(phone);
-  }
-
-  // If QR is already available after createBot
-  if (bot.qr) return bot.qr;
-
-  // Wait for QR to be generated (up to 30s)
-  return new Promise((resolve) => {
-    bot.qrResolve = resolve;
-    setTimeout(() => {
-      if (bot.qrResolve === resolve) {
-        bot.qrResolve = null;
-        resolve(bot.qr || null);
-      }
-    }, 30000);
-  });
-}
-
 // ── Destroy a session ────────────────────────────────────────────────────────
 async function destroySession(phone) {
   const bot = _bots.get(phone);
@@ -282,8 +378,9 @@ module.exports = {
   bootSavedSessions,
   createBot,
   destroySession,
+  requestPairCode,
+  requestQR,
   getBot,
   getAllBots,
-  getQR,
   maskPhone,
 };
