@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: tech-god-bug-2026
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OWNER_NUMBER
+        sync: false
+      - key: SESSION_ID
+        sync: false
+      - key: BOT_NAME
+        value: Tech God Bug 2026

@@ -1,0 +1,27 @@
+{
+  "name": "Tech God Bug 2026",
+  "description": "Multi-User WhatsApp Bot by Dev-Ntando",
+  "repository": "https://github.com/mr-ntando-dev/TECH-GOD-BUG-2026",
+  "keywords": ["whatsapp", "bot", "baileys", "tech-god", "bug"],
+  "env": {
+    "OWNER_NUMBER": {
+      "description": "Your WhatsApp number (digits only)",
+      "required": true
+    },
+    "BOT_NAME": {
+      "description": "Bot display name",
+      "value": "Tech God Bug 2026"
+    },
+    "PREFIX": {
+      "description": "Command prefix",
+      "value": "."
+    },
+    "SESSION_ID": {
+      "description": "Session ID (from pairing)",
+      "required": false
+    }
+  },
+  "buildpacks": [
+    { "url": "heroku/nodejs" }
+  ]
+}
