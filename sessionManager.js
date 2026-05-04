@@ -19,8 +19,7 @@ const {
   useMultiFileAuthState,
   DisconnectReason,
   fetchLatestBaileysVersion,
-  DEFAULT_CONNECTION_CONFIG,
-} = require('@whiskeysockets/baileys');
+} = require('baileys');
 
 const config    = require('./config');
 const antiban   = require('./utils/antiban');
@@ -46,8 +45,8 @@ async function _getVersion() {
     _versionFetchedAt = Date.now();
     _log('WA version:', version.join('.'));
   } catch (e) {
-    if (!_cachedVersion) _cachedVersion = DEFAULT_CONNECTION_CONFIG.version;
-    _log('fetchLatestBaileysVersion failed, using cached/bundled:', e.message);
+    if (!_cachedVersion) _cachedVersion = [2, 24, 6];
+    _log('fetchLatestBaileysVersion failed, using fallback:', e.message);
   }
   return _cachedVersion;
 }

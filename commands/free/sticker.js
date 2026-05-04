@@ -6,7 +6,7 @@
 'use strict';
 const antiban = require('../../utils/antiban');
 const config  = require('../../config');
-const { downloadMediaMessage } = require('@whiskeysockets/baileys');
+const { downloadMediaMessage } = require('baileys');
 
 module.exports = async (sock, msg, args, { jid }) => {
   const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
