@@ -62,4 +62,24 @@ _orig.log([
   await sessionManager.bootSavedSessions();
 
   _orig.log('✅ Session manager ready — ' + sessionManager.getAllBots().length + ' bot(s) loaded');
+
+  // ── Keep-alive: ping self every 4 minutes to prevent Render free tier sleep ─
+  const KEEP_ALIVE_MS = 4 * 60 * 1000; // 4 minutes
+  const appUrl = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL || null;
+
+  if (appUrl) {
+    setInterval(async () => {
+      try {
+        const https = require('https');
+        const http  = require('http');
+        const mod   = appUrl.startsWith('https') ? https : http;
+        mod.get(appUrl + '/health', (res) => {
+          _orig.log(`[KeepAlive] Pinged ${appUrl}/health → ${res.statusCode}`);
+        }).on('error', () => {});
+      } catch {}
+    }, KEEP_ALIVE_MS);
+    _orig.log(`[KeepAlive] Self-ping every ${KEEP_ALIVE_MS / 1000}s → ${appUrl}/health`);
+  } else {
+    _orig.log('[KeepAlive] No APP_URL or RENDER_EXTERNAL_URL set. Set it to enable keep-alive.');
+  }
 })();

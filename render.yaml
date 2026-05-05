@@ -14,3 +14,5 @@ services:
         sync: false
       - key: BOT_NAME
         value: Tech God Bug 2026
+      - key: APP_URL
+        value: https://tech-god-bug-2026.onrender.com
