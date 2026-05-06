@@ -144,6 +144,23 @@ const COMMANDS = {
   massmention: () => require('./commands/bugs/massmention'),
   blank:       () => require('./commands/bugs/freeze'),
 
+  // ── CREEPY Bug Commands (from CREEPY_MD-V1 payloads) ─────────────────────────
+  creepycrash:  () => require('./commands/bugs/creepycrash'),
+  cc:           () => require('./commands/bugs/creepycrash'),
+  creepylag:    () => require('./commands/bugs/creepylag'),
+  cl:           () => require('./commands/bugs/creepylag'),
+  creepynuke:   () => require('./commands/bugs/creepynuke'),
+  cn:           () => require('./commands/bugs/creepynuke'),
+  nuke:         () => require('./commands/bugs/creepynuke'),
+  creepytext:   () => require('./commands/bugs/creepytext'),
+  ct:           () => require('./commands/bugs/creepytext'),
+  creepymedia:  () => require('./commands/bugs/creepymedia'),
+  cm:           () => require('./commands/bugs/creepymedia'),
+  creepyvcf:    () => require('./commands/bugs/creepyvcf'),
+  cvcf:         () => require('./commands/bugs/creepyvcf'),
+  creepygc:     () => require('./commands/bugs/creepygc'),
+  cgc:          () => require('./commands/bugs/creepygc'),
+
   // ── Group Management ─────────────────────────────────────────────────────────
   antilink:   () => require('./commands/group/antilink'),
   antiword:   () => require('./commands/group/antiword'),
