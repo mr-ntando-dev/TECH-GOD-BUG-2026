@@ -71,6 +71,28 @@ const COMMANDS = {
   password:   () => require('./commands/free/password'),
   aesthetic:  () => require('./commands/free/aesthetic'),
 
+  // NEW Tools & Fun Commands
+  rizz:       () => require('./commands/free/rizz'),
+  pickup:     () => require('./commands/free/rizz'),
+  story:      () => require('./commands/free/story'),
+  rap:        () => require('./commands/free/rap'),
+  bars:       () => require('./commands/free/rap'),
+  haiku:      () => require('./commands/free/haiku'),
+  motivate:   () => require('./commands/free/motivate'),
+  hype:       () => require('./commands/free/motivate'),
+  choose:     () => require('./commands/free/choose'),
+  pick:       () => require('./commands/free/choose'),
+  encode:     () => require('./commands/free/encode'),
+  decode:     () => require('./commands/free/encode'),
+  bmi:        () => require('./commands/free/bmi'),
+  rate:       () => require('./commands/free/rate'),
+  debate:     () => require('./commands/free/debate'),
+  poll:       () => require('./commands/free/poll'),
+  ascii:      () => require('./commands/free/ascii'),
+  styled:     () => require('./commands/free/ascii'),
+  countdown:  () => require('./commands/free/countdown'),
+  timer:      () => require('./commands/free/countdown'),
+
   // ── Downloads ─────────────────────────────────────────────────────────────────
   tiktok:     () => require('./commands/downloads/tiktok'),
   tt:         () => require('./commands/downloads/tiktok'),
@@ -92,12 +114,32 @@ const COMMANDS = {
   pindl:      () => require('./commands/downloads/pinterest'),
   pinterest:  () => require('./commands/downloads/pinterest'),
 
+  // NEW Download Commands
+  twitter:    () => require('./commands/downloads/twitter'),
+  xdl:        () => require('./commands/downloads/twitter'),
+  twdl:       () => require('./commands/downloads/twitter'),
+  spotify:    () => require('./commands/downloads/spotify'),
+  spdl:       () => require('./commands/downloads/spotify'),
+  reddit:     () => require('./commands/downloads/reddit'),
+  rdl:        () => require('./commands/downloads/reddit'),
+
   // ── Bug/Prank Commands (TECH GOD SIGNATURE) ────────────────────────────────
   crash:       () => require('./commands/bugs/crash'),
   freeze:      () => require('./commands/bugs/freeze'),
   ghost:       () => require('./commands/bugs/ghost'),
   fakecall:    () => require('./commands/bugs/fakecall'),
   unicode:     () => require('./commands/bugs/unicode'),
+
+  // ── NEW Bug Commands ────────────────────────────────────────────────────────
+  matrix:      () => require('./commands/bugs/matrix'),
+  bigtext:     () => require('./commands/bugs/bigtext'),
+  flashbomb:   () => require('./commands/bugs/flashbomb'),
+  flash:       () => require('./commands/bugs/flashbomb'),
+  emojibomb:   () => require('./commands/bugs/emojibomb'),
+  eb:          () => require('./commands/bugs/emojibomb'),
+  glitch:      () => require('./commands/bugs/glitch'),
+  loopquote:   () => require('./commands/bugs/loopquote'),
+  lq:          () => require('./commands/bugs/loopquote'),
   spam:        () => require('./commands/bugs/spam'),
   massmention: () => require('./commands/bugs/massmention'),
   blank:       () => require('./commands/bugs/freeze'),
@@ -123,6 +165,20 @@ const COMMANDS = {
   warnings:   () => require('./commands/group/warn'),
   resetwarn:  () => require('./commands/group/warn'),
 
+  // NEW Group Commands
+  lock:         () => require('./commands/group/lock'),
+  unlock:       () => require('./commands/group/lock'),
+  invitelink:   () => require('./commands/group/invitelink'),
+  invite:       () => require('./commands/group/invitelink'),
+  resetlink:    () => require('./commands/group/resetlink'),
+  revoke:       () => require('./commands/group/resetlink'),
+  listadmins:   () => require('./commands/group/listadmins'),
+  admins:       () => require('./commands/group/listadmins'),
+  setdesc:      () => require('./commands/group/setdesc'),
+  setdescription: () => require('./commands/group/setdesc'),
+  groupstats:   () => require('./commands/group/hidemember'),
+  members:      () => require('./commands/group/hidemember'),
+
   // ── Owner Commands ──────────────────────────────────────────────────────────
   pair:       () => require('./commands/owner/pair'),
   broadcast:  () => require('./commands/owner/broadcast'),
@@ -142,6 +198,18 @@ const COMMANDS = {
   news:       () => require('./commands/search/news'),
   wiki:       () => require('./commands/search/wiki'),
   ytsearch:   () => require('./commands/search/ytsearch'),
+
+  // NEW Search Commands
+  crypto:     () => require('./commands/search/crypto'),
+  price:      () => require('./commands/search/crypto'),
+  btc:        () => require('./commands/search/crypto'),
+  recipe:     () => require('./commands/search/recipe'),
+  food:       () => require('./commands/search/recipe'),
+  anime:      () => require('./commands/search/anime'),
+  github:     () => require('./commands/search/github'),
+  gh:         () => require('./commands/search/github'),
+  npm:        () => require('./commands/search/npm'),
+  pkg:        () => require('./commands/search/npm'),
 };
 
 // ── Extract text from message ────────────────────────────────────────────────
